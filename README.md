@@ -15,7 +15,7 @@ import { Peer, webSocketTransport, RequestError } from "rxjs-protoo-client";
 
 const transport = await webSocketTransport(url);
 
-const peer = new Peer(transport);
+const peer = Peer.overTransport(transport);
 
 // Send a request.
 const response = await peer.request("method", {});

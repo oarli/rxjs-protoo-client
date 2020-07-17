@@ -1,4 +1,4 @@
-import { Subject, Observable, Observer } from "rxjs";
+import { Subject, Observable, Observer, Operator } from "rxjs";
 import {
   Message,
   Request,
@@ -15,22 +15,40 @@ function firstValueFrom<T>(obs: Observable<T>) {
   return obs.pipe(first()).toPromise();
 }
 
-export default class extends Observable<Request | Notification>
+export default class Peer<T> extends Observable<T>
   implements Observer<[Request, any]> {
-  constructor(private readonly transport: Subject<Message>) {
-    super((observer) => {
-      const subscription = this.transport
-        .pipe(
-          filter(
-            (message): message is Request | Notification =>
-              "request" in message || "notification" in message
-          )
-        )
-        .subscribe(observer);
-      return () => subscription.unsubscribe();
-    });
+  constructor(
+    private readonly transport: Subject<Message>,
+    readonly receiver: Observable<T>
+  ) {
+    super();
+    this.source = receiver;
+  }
 
-    this.transport = transport;
+  static overTransport(
+    transport: Subject<Message>
+  ): Peer<Request | Notification> {
+    return new Peer(
+      transport,
+      new Observable((observer) => {
+        const subscription = transport
+          .pipe(
+            filter(
+              (message): message is Request | Notification =>
+                "request" in message || "notification" in message
+            )
+          )
+          .subscribe(observer);
+        return () => subscription.unsubscribe();
+      })
+    );
+  }
+
+  lift<R = T>(operator: Operator<T, R>): Peer<R> {
+    const obs = new Observable<R>();
+    obs.source = this;
+    obs.operator = operator;
+    return new Peer(this.transport, obs);
   }
 
   next([request, data]: [Request, any]) {
