@@ -1,0 +1,47 @@
+{
+  "name": "rxjs-protoo-client",
+  "version": "4.0.4",
+  "description": "protoo RxJS client module",
+  "author": "Kevin Wang <kevmo314@gmail.com>",
+  "homepage": "https://protoojs.org",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kevmo314/rxjs-proto-client.git"
+  },
+  "scripts": {
+    "prepublish": "tsc",
+    "build": "tsc",
+    "test": "jest"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "engines": {
+    "node": ">=8.0.0"
+  },
+  "dependencies": {
+    "isomorphic-ws": "^4.0.1",
+    "rxjs": "^6.6.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^26.0.4",
+    "@types/node": "^14.0.23",
+    "@types/protoo-server": "^4.0.1",
+    "@types/ws": "^7.2.6",
+    "eslint": "^5.16.0",
+    "jest": "^26.1.0",
+    "jest-playwright-preset": "^1.2.1",
+    "loglevel": "^1.6.8",
+    "playwright": "^1.2.1",
+    "protoo-server": "^4.0.4",
+    "ts-jest": "^26.1.2",
+    "typescript": "^3.9.7",
+    "ws": "^7.3.1"
+  },
+  "jest": {
+    "projects": [
+      "jest.browser.config.js",
+      "jest.node.config.js"
+    ]
+  }
+}
