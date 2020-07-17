@@ -15,7 +15,7 @@ function firstValueFrom<T>(obs: Observable<T>) {
   return obs.pipe(first()).toPromise();
 }
 
-export default class Peer<T> extends Observable<T>
+export default class Peer<T = Request | Notification> extends Observable<T>
   implements Observer<[Request, any]> {
   constructor(
     private readonly transport: Subject<Message>,
@@ -25,9 +25,7 @@ export default class Peer<T> extends Observable<T>
     this.source = receiver;
   }
 
-  static overTransport(
-    transport: Subject<Message>
-  ): Peer<Request | Notification> {
+  static overTransport(transport: Subject<Message>): Peer {
     return new Peer(
       transport,
       new Observable((observer) => {
