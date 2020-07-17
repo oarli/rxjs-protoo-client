@@ -1,9 +1,9 @@
 {
   "compilerOptions": {
     "outDir": "dist",
+    "rootDir": "src",
     "strict": true,
     "resolveJsonModule": true,
     "declaration": true
-  },
-  "include": ["src/**/*"]
+  }
 }
