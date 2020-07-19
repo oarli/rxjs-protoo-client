@@ -69,7 +69,7 @@ export default class Peer<T = Request | Notification> extends Observable<T>
 
   /** Send a protoo request to the server-side Room. */
   request(method: string, data: any = undefined) {
-    const id = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
+    const id = Math.floor(Math.random() * 10_000_000);
     const request = { request: true, id, method, data } as Request;
 
     const responses$ = this.transport.pipe(
