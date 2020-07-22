@@ -1,10 +1,10 @@
 import * as http from "http";
 import * as protooServer from "protoo-server";
-import { timer, UnaryFunction, Observable } from "rxjs";
+import { timer, UnaryFunction, Observable, Subject } from "rxjs";
 import { takeUntil, publish, filter } from "rxjs/operators";
 import * as url from "url";
 import * as protooClient from "./index";
-import { RequestError } from "./Message";
+import { RequestError, Message } from "./Message";
 import { AddressInfo } from "net";
 
 let httpServer: http.Server;
@@ -14,6 +14,20 @@ let clientPeer: protooClient.Peer<
 >;
 let serverPeer: protooServer.Peer;
 let address: string;
+
+function openTransport() {
+  return new Promise<Subject<Message>>((resolve) => {
+    const transport = protooClient.webSocketTransport({
+      url: address,
+      openObserver: {
+        next() {
+          resolve(transport);
+        },
+      },
+    });
+    transport.subscribe();
+  });
+}
 
 beforeEach(async () => {
   httpServer = http.createServer();
@@ -56,13 +70,11 @@ afterEach(() => {
 test("client connects to server and disconnects", async () => {
   expect(room.peers).toEqual([]);
 
-  const transport = await protooClient.webSocketTransport(address);
+  clientPeer = protooClient.Peer.overTransport(await openTransport());
 
-  clientPeer = protooClient.Peer.overTransport(transport);
-
-  const clientClosePromise = new Promise((resolve, reject) =>
-    clientPeer.subscribe(reject, resolve, reject)
-  );
+  const clientClosePromise = new Promise((resolve, reject) => {
+    clientPeer.subscribe(reject, reject, resolve);
+  });
 
   expect(room.peers).toEqual([serverPeer]);
 
@@ -79,9 +91,7 @@ test("client connects to server and disconnects", async () => {
 });
 
 test("client sends request to server", async () => {
-  const transport = await protooClient.webSocketTransport(address);
-
-  clientPeer = protooClient.Peer.overTransport(transport);
+  clientPeer = protooClient.Peer.overTransport(await openTransport());
 
   const onServerRequest = jest.fn();
 
@@ -101,9 +111,7 @@ test("client sends request to server", async () => {
 });
 
 test("client sends request to server and server rejects it", async () => {
-  const transport = await protooClient.webSocketTransport(address);
-
-  clientPeer = protooClient.Peer.overTransport(transport);
+  clientPeer = protooClient.Peer.overTransport(await openTransport());
 
   (serverPeer as any).once(
     "request",
@@ -122,9 +130,7 @@ test("client sends request to server and server rejects it", async () => {
 });
 
 test("client sends request to server and server throws", async () => {
-  const transport = await protooClient.webSocketTransport(address);
-
-  clientPeer = protooClient.Peer.overTransport(transport);
+  clientPeer = protooClient.Peer.overTransport(await openTransport());
 
   (serverPeer as any).once("request", () => {
     throw new Error("BOOM!!!");
@@ -140,9 +146,7 @@ test("client sends request to server and server throws", async () => {
 });
 
 test("client sends notification to server", async () => {
-  const transport = await protooClient.webSocketTransport(address);
-
-  clientPeer = protooClient.Peer.overTransport(transport);
+  clientPeer = protooClient.Peer.overTransport(await openTransport());
 
   const promise = new Promise((resolve) => {
     (serverPeer as any).once(
@@ -162,9 +166,7 @@ test("client sends notification to server", async () => {
 });
 
 test("server sends request to client", async () => {
-  const transport = await protooClient.webSocketTransport(address);
-
-  clientPeer = protooClient.Peer.overTransport(transport);
+  clientPeer = protooClient.Peer.overTransport(await openTransport());
 
   const subscription = clientPeer.subscribe((request) => {
     if (!("request" in request)) {
@@ -182,9 +184,7 @@ test("server sends request to client", async () => {
 });
 
 test("server sends request to client and client rejects it", async () => {
-  const transport = await protooClient.webSocketTransport(address);
-
-  clientPeer = protooClient.Peer.overTransport(transport);
+  clientPeer = protooClient.Peer.overTransport(await openTransport());
 
   const subscription = clientPeer.subscribe((request) => {
     if ("request" in request) {
@@ -204,9 +204,7 @@ test("server sends request to client and client rejects it", async () => {
 });
 
 test("server sends notification to client", async () => {
-  const transport = await protooClient.webSocketTransport(address);
-
-  clientPeer = protooClient.Peer.overTransport(transport);
+  clientPeer = protooClient.Peer.overTransport(await openTransport());
 
   const onClientRequest = jest.fn();
 
@@ -231,9 +229,7 @@ test("server sends notification to client", async () => {
 });
 
 test("room.close() closes clientPeer and serverPeer", async () => {
-  const transport = await protooClient.webSocketTransport(address);
-
-  clientPeer = protooClient.Peer.overTransport(transport);
+  clientPeer = protooClient.Peer.overTransport(await openTransport());
 
   const onServerPeerClose = jest.fn();
 
@@ -251,9 +247,7 @@ test("room.close() closes clientPeer and serverPeer", async () => {
 });
 
 test("peer can be piped", async () => {
-  const transport = await protooClient.webSocketTransport(address);
-
-  clientPeer = protooClient.Peer.overTransport(transport).pipe(
+  clientPeer = protooClient.Peer.overTransport(await openTransport()).pipe(
     filter((message) => "request" in message)
   ) as protooClient.Peer<protooClient.Request>;
 

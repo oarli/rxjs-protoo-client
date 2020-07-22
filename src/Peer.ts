@@ -28,17 +28,12 @@ export default class Peer<T = Request | Notification> extends Observable<T>
   static overTransport(transport: Subject<Message>): Peer {
     return new Peer(
       transport,
-      new Observable((observer) => {
-        const subscription = transport
-          .pipe(
-            filter(
-              (message): message is Request | Notification =>
-                "request" in message || "notification" in message
-            )
-          )
-          .subscribe(observer);
-        return () => subscription.unsubscribe();
-      })
+      transport.pipe(
+        filter(
+          (message): message is Request | Notification =>
+            "request" in message || "notification" in message
+        )
+      )
     );
   }
 
