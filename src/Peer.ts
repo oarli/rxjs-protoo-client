@@ -18,7 +18,7 @@ function firstValueFrom<T>(obs: Observable<T>) {
 export default class Peer<T = Request | Notification> extends Observable<T>
   implements Observer<[Request, any]> {
   constructor(
-    private readonly transport: Subject<Message>,
+    readonly transport: Subject<Message>,
     readonly receiver: Observable<T>
   ) {
     super();
